@@ -1,3 +1,4 @@
+library(lattice)
 library(tidyverse)
 library(utils)
 
@@ -26,6 +27,7 @@ head(eData)
 qnorm(p = 0.9, mean = 2, sd = 0.75, lower.tail = TRUE)
 
 viol_sim <- function(n = 10, nsims = 1000, mu = 2, sigma = 0.75, cr = 3) {
+  #print(n)
   temp <- numeric()
   for (i in 1:nsims) {
     temp[i] <- sum(rnorm(n, mu, sigma) > cr) > 0.1*n
@@ -46,6 +48,12 @@ tab <- data.frame(TP = c(20.1,21.5,30,15.2,31,12,20,25,19,11,14,21),
 tab
 tapply(tab$TP, tab$site, mean)
 tapply(tab$TP, tab$day, mean)
+
+# Info from Fig 2.3
+id <- as.numeric(ordered(c(1,1,2,2,2)))
+idtbl <- table(id)  # idtbl
+ns <- max(idtbl)
+nr <- max(id)
                   
 # 2.5 Exercises
 ## 1a
@@ -62,3 +70,38 @@ x <- c(0, 4, 0.5)
 
 n_dens(x)
 dnorm(x, 2, 1.25)
+
+## 2a
+viol_sim(n = 10, mu = 2, sigma = 0.75)
+viol_sim(n = 100, mu = 2, sigma = 0.75)
+
+viol_sim(n = 10, mu = 2, sigma = 1)
+viol_sim(n = 100, mu = 2, sigma = 1)
+
+## 2b
+samp = c(6, 12, 24, 48, 60, 72, 84, 96)
+data.frame(samp = samp,
+           normal = sapply(samp, viol_sim),
+           impaired = sapply(samp, viol_sim, sigma = 1)) %>%
+  pivot_longer(normal:impaired, names_to = "status") %>%
+  ggplot(mapping = aes(samp, value, col = status)) +
+  geom_line() + coord_cartesian(xlim = c(0,100), ylim = c(0, 1), expand = FALSE) +
+  theme_bw()
+
+## 3a & 3b
+data <- read_csv("book_data/Intelligence.csv") %>%
+  mutate(log_body = log(Body.weigh),
+         log_brain = log(Brain.weight),
+         int = Brain.weight/(Body.weigh^(2/3)))
+data %>%
+  ggplot(aes(log_body, log_brain)) +
+  geom_point()
+
+## 3c
+dotplot(Species~int, data = data)
+
+## 3d
+# Chinchilla has an error in its data
+dotplot(reorder(Species, int) ~ int, data = data)
+
+## 4 - Data not accessible at the URL provided
